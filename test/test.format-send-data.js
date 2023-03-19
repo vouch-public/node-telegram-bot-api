@@ -32,29 +32,29 @@ describe('#_formatSendData', function sendfileSuite() {
     describe('filename', function filenameSuite() {
       it('(1) fileOptions.filename', function test() {
         const filename = 'custom-filename';
-        files.forEach((file) => {
-          const [{ [type]: data }] = bot._formatSendData(type, file, { filename });
+        files.forEach(async (file) => {
+          const [{ [type]: data }] = await bot._formatSendData(type, file, { filename });
           assert.equal(data.options.filename, filename);
         });
       });
 
-      it('(2) Stream#path', function test() {
+      it('(2) Stream#path', async function test() {
         if (!stream.path) {
           this.skip('Stream#path unsupported');
           return;
         }
-        const [{ [type]: data }] = bot._formatSendData(type, stream);
+        const [{ [type]: data }] = await bot._formatSendData(type, stream);
         assert.equal(data.options.filename, path.basename(paths.audio));
       });
 
-      it('(3) filepath', function test() {
-        const [{ [type]: data }] = bot._formatSendData(type, filepath);
+      it('(3) filepath', async function test() {
+        const [{ [type]: data }] = await bot._formatSendData(type, filepath);
         assert.equal(data.options.filename, path.basename(paths.audio));
       });
 
       it('(4) final default', function test() {
-        [nonPathStream, buffer, nonDetectableBuffer].forEach((file) => {
-          const [{ [type]: data }] = bot._formatSendData(type, file);
+        [nonPathStream, buffer, nonDetectableBuffer].forEach(async (file) => {
+          const [{ [type]: data }] = await bot._formatSendData(type, file);
           assert.equal(data.options.filename, 'filename');
         });
       });
@@ -63,34 +63,34 @@ describe('#_formatSendData', function sendfileSuite() {
     describe('contentType', function contentTypeSuite() {
       it('(1) fileOpts.contentType', function test() {
         const contentType = 'application/custom-type';
-        files.forEach((file) => {
-          const [{ [type]: data }] = bot._formatSendData(type, file, { contentType });
+        files.forEach(async (file) => {
+          const [{ [type]: data }] = await bot._formatSendData(type, file, { contentType });
           assert.equal(data.options.contentType, contentType);
         });
       });
 
-      it('(2) Stream#path', function test() {
+      it('(2) Stream#path', async function test() {
         if (!stream.path) {
           this.skip('Stream#path unsupported');
           return;
         }
-        const [{ [type]: data }] = bot._formatSendData(type, stream);
+        const [{ [type]: data }] = await bot._formatSendData(type, stream);
         assert.equal(data.options.contentType, 'audio/mpeg');
       });
 
-      it('(3) Buffer file-type', function test() {
-        const [{ [type]: data }] = bot._formatSendData(type, buffer);
+      it('(3) Buffer file-type', async function test() {
+        const [{ [type]: data }] = await bot._formatSendData(type, buffer);
         assert.equal(data.options.contentType, 'audio/mpeg');
       });
 
-      it('(4) filepath', function test() {
-        const [{ [type]: data }] = bot._formatSendData(type, filepath);
+      it('(4) filepath', async function test() {
+        const [{ [type]: data }] = await bot._formatSendData(type, filepath);
         assert.equal(data.options.contentType, 'audio/mpeg');
       });
 
       it('(5) fileOptions.filename', function test() {
-        [nonPathStream, nonDetectableBuffer].forEach((file) => {
-          const [{ [type]: data }] = bot._formatSendData(type, file, {
+        [nonPathStream, nonDetectableBuffer].forEach(async (file) => {
+          const [{ [type]: data }] = await bot._formatSendData(type, file, {
             filename: 'image.gif',
           });
           assert.equal(data.options.contentType, 'image/gif');
@@ -98,15 +98,15 @@ describe('#_formatSendData', function sendfileSuite() {
       });
 
       it('(6) Final default', function test() {
-        [nonPathStream, nonDetectableBuffer].forEach((file) => {
-          const [{ [type]: data }] = bot._formatSendData(type, file);
+        [nonPathStream, nonDetectableBuffer].forEach(async (file) => {
+          const [{ [type]: data }] = await bot._formatSendData(type, file);
           assert.equal(data.options.contentType, 'application/octet-stream');
         });
       });
     });
   });
 
-  it('should handle buffer path from fs.readStream', function test() {
+  it('should handle buffer path from fs.readStream', async function test() {
     let file;
     try {
       file = fs.createReadStream(Buffer.from(paths.audio));
@@ -118,13 +118,13 @@ describe('#_formatSendData', function sendfileSuite() {
         return;
       }
     }
-    const [{ [type]: data }] = bot._formatSendData('file', file);
+    const [{ [type]: data }] = await bot._formatSendData('file', file);
     assert.equal(data.options.filename, path.basename(paths.audio));
   });
 
-  it('should not accept file-paths if disallowed with constructor option', function test() {
+  it('should not accept file-paths if disallowed with constructor option', async function test() {
     const tgbot = new TelegramBot('token', { filepath: false });
-    const [formData, fileId] = tgbot._formatSendData('file', paths.audio);
+    const [formData, fileId] = await tgbot._formatSendData('file', paths.audio);
     assert.ok(fileId);
     assert.ok(!formData);
   });
@@ -132,8 +132,8 @@ describe('#_formatSendData', function sendfileSuite() {
   it('should allow stream.path that can not be parsed', function test() {
     const stream = fs.createReadStream(paths.audio);
     stream.path = '/?id=123'; // for example, 'http://example.com/?id=666'
-    assert.doesNotThrow(function assertDoesNotThrow() {
-      bot._formatSendData('file', stream);
+    assert.doesNotThrow(async function assertDoesNotThrow() {
+      return await bot._formatSendData('file', stream);
     });
   });
 });

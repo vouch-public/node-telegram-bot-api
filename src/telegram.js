@@ -237,14 +237,14 @@ class TelegramBot extends EventEmitter {
     }
   }
 
-  _fixAddFileThumb(options, opts) {
+  async _fixAddFileThumb(options, opts) {
     if (options.thumb) {
       if (opts.formData === null) {
         opts.formData = {};
       }
 
       const attachName = 'photo';
-      const [formData] = this._formatSendData(attachName, options.thumb.replace('attach://', ''));
+      const [formData] = await this._formatSendData(attachName, options.thumb.replace('attach://', ''));
 
       if (formData) {
         opts.formData[attachName] = formData[attachName];
@@ -306,19 +306,20 @@ class TelegramBot extends EventEmitter {
 
   /**
    * Format data to be uploaded; handles file paths, streams and buffers
+   * @async
    * @param  {String} type
    * @param  {String|stream.Stream|Buffer} data
    * @param  {Object} fileOptions File options
    * @param  {String} [fileOptions.filename] File name
    * @param  {String} [fileOptions.contentType] Content type (i.e. MIME)
-   * @return {Array} formatted
+   * @return {Promise<Array>} formatted
    * @return {Object} formatted[0] formData
    * @return {String} formatted[1] fileId
    * @throws Error if Buffer file type is not supported.
    * @see https://npmjs.com/package/file-type
    * @private
    */
-  _formatSendData(type, data, fileOptions = {}) {
+  async _formatSendData(type, data, fileOptions = {}) {
     const deprecationMessage =
       'See https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files' +
       ' for more information on how sending files has been improved and' +
@@ -342,7 +343,7 @@ class TelegramBot extends EventEmitter {
         filename = 'data';
       }
       if (!contentType) {
-        const filetype = fileType(data);
+        const filetype = await fileType.fromBuffer(data);
         if (filetype) {
           contentType = filetype.mime;
           const ext = filetype.ext;
@@ -808,7 +809,7 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#setwebhook
    * @see https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
    */
-  setWebHook(url, options = {}, fileOptions = {}) {
+  async setWebHook(url, options = {}, fileOptions = {}) {
     /* The older method signature was setWebHook(url, cert).
      * We need to ensure backwards-compatibility while maintaining
      * consistency of the method signatures throughout the library */
@@ -829,7 +830,7 @@ class TelegramBot extends EventEmitter {
 
     if (cert) {
       try {
-        const sendData = this._formatSendData('certificate', cert, fileOptions);
+        const sendData = await this._formatSendData('certificate', cert, fileOptions);
         opts.formData = sendData[0];
         opts.qs.certificate = sendData[1];
       } catch (ex) {
@@ -963,13 +964,13 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#sendphoto
    * @see https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
    */
-  sendPhoto(chatId, photo, options = {}, fileOptions = {}) {
+  async sendPhoto(chatId, photo, options = {}, fileOptions = {}) {
     const opts = {
       qs: options,
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('photo', photo, fileOptions);
+      const sendData = await this._formatSendData('photo', photo, fileOptions);
       opts.formData = sendData[0];
       opts.qs.photo = sendData[1];
     } catch (ex) {
@@ -992,7 +993,7 @@ class TelegramBot extends EventEmitter {
   * @see https://core.telegram.org/bots/api#sendaudio
   * @see https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
   */
-  sendAudio(chatId, audio, options = {}, fileOptions = {}) {
+  async sendAudio(chatId, audio, options = {}, fileOptions = {}) {
     const opts = {
       qs: options
     };
@@ -1000,7 +1001,7 @@ class TelegramBot extends EventEmitter {
     opts.qs.chat_id = chatId;
 
     try {
-      const sendData = this._formatSendData('audio', audio, fileOptions);
+      const sendData = await this._formatSendData('audio', audio, fileOptions);
       opts.formData = sendData[0];
       opts.qs.audio = sendData[1];
       this._fixAddFileThumb(options, opts);
@@ -1022,13 +1023,13 @@ class TelegramBot extends EventEmitter {
   * @see https://core.telegram.org/bots/api#sendDocument
   * @see https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
   */
-  sendDocument(chatId, doc, options = {}, fileOptions = {}) {
+  async sendDocument(chatId, doc, options = {}, fileOptions = {}) {
     const opts = {
       qs: options
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('document', doc, fileOptions);
+      const sendData = await this._formatSendData('document', doc, fileOptions);
       opts.formData = sendData[0];
       opts.qs.document = sendData[1];
       this._fixAddFileThumb(options, opts);
@@ -1051,13 +1052,13 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#sendvideo
    * @see https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
    */
-  sendVideo(chatId, video, options = {}, fileOptions = {}) {
+  async sendVideo(chatId, video, options = {}, fileOptions = {}) {
     const opts = {
       qs: options
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('video', video, fileOptions);
+      const sendData = await this._formatSendData('video', video, fileOptions);
       opts.formData = sendData[0];
       opts.qs.video = sendData[1];
       this._fixAddFileThumb(options, opts);
@@ -1078,13 +1079,13 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#sendanimation
    * @see https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
    */
-  sendAnimation(chatId, animation, options = {}, fileOptions = {}) {
+  async sendAnimation(chatId, animation, options = {}, fileOptions = {}) {
     const opts = {
       qs: options
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('animation', animation, fileOptions);
+      const sendData = await this._formatSendData('animation', animation, fileOptions);
       opts.formData = sendData[0];
       opts.qs.animation = sendData[1];
     } catch (ex) {
@@ -1106,13 +1107,13 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#sendvoice
    * @see https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
    */
-  sendVoice(chatId, voice, options = {}, fileOptions = {}) {
+  async sendVoice(chatId, voice, options = {}, fileOptions = {}) {
     const opts = {
       qs: options
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('voice', voice, fileOptions);
+      const sendData = await this._formatSendData('voice', voice, fileOptions);
       opts.formData = sendData[0];
       opts.qs.voice = sendData[1];
     } catch (ex) {
@@ -1134,13 +1135,13 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#sendvideonote
    * @see https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
   */
-  sendVideoNote(chatId, videoNote, options = {}, fileOptions = {}) {
+  async sendVideoNote(chatId, videoNote, options = {}, fileOptions = {}) {
     const opts = {
       qs: options
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('video_note', videoNote, fileOptions);
+      const sendData = await this._formatSendData('video_note', videoNote, fileOptions);
       opts.formData = sendData[0];
       opts.qs.video_note = sendData[1];
       this._fixAddFileThumb(options, opts);
@@ -1166,7 +1167,7 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#sendmediagroup
    * @see https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files
    */
-  sendMediaGroup(chatId, media, options = {}) {
+  async sendMediaGroup(chatId, media, options = {}) {
     const opts = {
       qs: options,
     };
@@ -1181,7 +1182,7 @@ class TelegramBot extends EventEmitter {
       delete payload.fileOptions;
       try {
         const attachName = String(index);
-        const [formData, fileId] = this._formatSendData(attachName, input.media, input.fileOptions);
+        const [formData, fileId] = await this._formatSendData(attachName, input.media, input.fileOptions);
         if (formData) {
           opts.formData[attachName] = formData[attachName];
           payload.media = `attach://${attachName}`;
@@ -1320,13 +1321,13 @@ class TelegramBot extends EventEmitter {
    * @return {Promise}  On success, the sent [Message](https://core.telegram.org/bots/api#message) object is returned
    * @see https://core.telegram.org/bots/api#senddice
    */
-  sendDice(chatId, options = {}) {
+  async sendDice(chatId, options = {}) {
     const opts = {
       qs: options,
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('dice');
+      const sendData = await this._formatSendData('dice');
       opts.formData = sendData[0];
     } catch (ex) {
       return Promise.reject(ex);
@@ -1665,13 +1666,13 @@ class TelegramBot extends EventEmitter {
    * @return {Promise} True on success
    * @see https://core.telegram.org/bots/api#setchatphoto
    */
-  setChatPhoto(chatId, photo, options = {}, fileOptions = {}) {
+  async setChatPhoto(chatId, photo, options = {}, fileOptions = {}) {
     const opts = {
       qs: options,
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('photo', photo, fileOptions);
+      const sendData = await this._formatSendData('photo', photo, fileOptions);
       opts.formData = sendData[0];
       opts.qs.photo = sendData[1];
     } catch (ex) {
@@ -2250,7 +2251,7 @@ class TelegramBot extends EventEmitter {
    * @return {Promise} On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api#message) is returned, otherwise True is returned
    * @see https://core.telegram.org/bots/api#editmessagemedia
    */
-  editMessageMedia(media, form = {}) {
+  async editMessageMedia(media, form = {}) {
     const regexAttach = /attach:\/\/.+/;
 
     if (typeof media.media === 'string' && regexAttach.test(media.media)) {
@@ -2265,7 +2266,7 @@ class TelegramBot extends EventEmitter {
 
       try {
         const attachName = String(0);
-        const [formData] = this._formatSendData(
+        const [formData] = await this._formatSendData(
           attachName,
           media.media.replace('attach://', ''),
           media.fileOptions
@@ -2355,13 +2356,13 @@ class TelegramBot extends EventEmitter {
    * @return {Promise} On success, the sent [Message](https://core.telegram.org/bots/api#message) is returned
    * @see https://core.telegram.org/bots/api#sendsticker
    */
-  sendSticker(chatId, sticker, options = {}, fileOptions = {}) {
+  async sendSticker(chatId, sticker, options = {}, fileOptions = {}) {
     const opts = {
       qs: options
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('sticker', sticker, fileOptions);
+      const sendData = await this._formatSendData('sticker', sticker, fileOptions);
       opts.formData = sendData[0];
       opts.qs.sticker = sendData[1];
     } catch (ex) {
@@ -2408,13 +2409,13 @@ class TelegramBot extends EventEmitter {
    * @return {Promise} On success, a [File](https://core.telegram.org/bots/api#file) object is returned
    * @see https://core.telegram.org/bots/api#uploadstickerfile
    */
-  uploadStickerFile(userId, pngSticker, options = {}, fileOptions = {}) {
+  async uploadStickerFile(userId, pngSticker, options = {}, fileOptions = {}) {
     const opts = {
       qs: options,
     };
     opts.qs.user_id = userId;
     try {
-      const sendData = this._formatSendData('png_sticker', pngSticker, fileOptions);
+      const sendData = await this._formatSendData('png_sticker', pngSticker, fileOptions);
       opts.formData = sendData[0];
       opts.qs.png_sticker = sendData[1];
     } catch (ex) {
@@ -2443,7 +2444,7 @@ class TelegramBot extends EventEmitter {
    * @return {Promise}  True on success
    * @see https://core.telegram.org/bots/api#createnewstickerset
    */
-  createNewStickerSet(userId, name, title, pngSticker, emojis, options = {}, fileOptions = {}) {
+  async createNewStickerSet(userId, name, title, pngSticker, emojis, options = {}, fileOptions = {}) {
     const opts = {
       qs: options,
     };
@@ -2453,7 +2454,7 @@ class TelegramBot extends EventEmitter {
     opts.qs.emojis = emojis;
     opts.qs.mask_position = stringify(options.mask_position);
     try {
-      const sendData = this._formatSendData('png_sticker', pngSticker, fileOptions);
+      const sendData = await this._formatSendData('png_sticker', pngSticker, fileOptions);
       opts.formData = sendData[0];
       opts.qs.png_sticker = sendData[1];
     } catch (ex) {
@@ -2483,7 +2484,7 @@ class TelegramBot extends EventEmitter {
    * @return {Promise}  True on success
    * @see https://core.telegram.org/bots/api#addstickertoset
    */
-  addStickerToSet(userId, name, sticker, emojis, stickerType = 'png_sticker', options = {}, fileOptions = {}) {
+  async addStickerToSet(userId, name, sticker, emojis, stickerType = 'png_sticker', options = {}, fileOptions = {}) {
     const opts = {
       qs: options,
     };
@@ -2497,7 +2498,7 @@ class TelegramBot extends EventEmitter {
     }
 
     try {
-      const sendData = this._formatSendData(stickerType, sticker, fileOptions);
+      const sendData = await this._formatSendData(stickerType, sticker, fileOptions);
       opts.formData = sendData[0];
       opts.qs[stickerType] = sendData[1];
     } catch (ex) {
@@ -2554,7 +2555,7 @@ class TelegramBot extends EventEmitter {
    * @return {Promise} True on success
    * @see https://core.telegram.org/bots/api#setstickersetthumb
    */
-  setStickerSetThumb(userId, name, pngThumb, options = {}, fileOptions = {}) {
+  async setStickerSetThumb(userId, name, pngThumb, options = {}, fileOptions = {}) {
     const opts = {
       qs: options,
     };
@@ -2562,7 +2563,7 @@ class TelegramBot extends EventEmitter {
     opts.qs.name = name;
     opts.qs.mask_position = stringify(options.mask_position);
     try {
-      const sendData = this._formatSendData('thumb', pngThumb, fileOptions);
+      const sendData = await this._formatSendData('thumb', pngThumb, fileOptions);
       opts.formData = sendData[0];
       opts.qs.thumb = sendData[1];
     } catch (ex) {
